@@ -8,7 +8,8 @@ public class IsoTerrain : MonoBehaviour {
 
 	bool generated = false;
 	bool spawned = false;
-	int iterations = 512;
+	int iterations = 2048;
+    int height = 186;
 
 	int x = 0;
 	int y = 0;
@@ -18,9 +19,9 @@ public class IsoTerrain : MonoBehaviour {
 	int originY = 0;
 	int originZ = 0;
 	
-	int w = 32;
-	int h = 16;
-	int p = 32;
+	int w = 64;
+	int h = 64;
+	int p = 64;
 
 	float[] datas;
 
@@ -68,17 +69,22 @@ public class IsoTerrain : MonoBehaviour {
 			noise = -1;
 		}*/
 
-		float height = Mathf.PerlinNoise(x/20f,z/10f) * Mathf.PerlinNoise(x/10f,z/60f) * Mathf.PerlinNoise(x/100f,z/30f) * h;
-		float noise = 1;
+        //float noise = Mathf.PerlinNoise(x / 60f, z / 60f) * Mathf.PerlinNoise(x / 30f + 28f, z / 1000f + 143f) * Mathf.PerlinNoise(x / 100f + 65f, z / 30f + 124f) * 2 - (height - y) / height;
+        float mountain = (y / height) - Mathf.PerlinNoise(x / 60f, z / 60f) - 1f /* (y / height)*/;
 
-		if(y > height){
-			noise = -1;
-		}
+		float noise = 0;
 
-		noise *= ImprovedNoise.Noise((x*2f+5f)/20f,(y*2f+3f)/40f,(z*2f+0.6f)/20f);
+        if (y > mountain)
+			noise = lerp(0.1f, y / height, 1f);
+        else
+            noise = lerp(0.1f, 1f - y / height, 0f);
 
-		return noise;
+		//noise *= (1.0f-ImprovedNoise.Noise((x*2f+5f)/20f,(y*2f+3f)/40f,(z*2f+0.6f)/20f)) * 0.8f;
+
+        return noise * 2f - 1f;
 	}
+
+    float lerp(float t, float a, float b) { return a + t * (b - a); }
 
 	void GenerateNoise()
 	{
@@ -111,28 +117,6 @@ public class IsoTerrain : MonoBehaviour {
 	{
 		SurfaceNets.Mesh m = SurfaceNets.Run(datas, new int[]{w, h, p});
 
-		Vector3[] vertices = new Vector3[m.vertices.Count];
-		int[] triangles = new int[m.faces.Count * 6];
-
-		for(int v = 0, vl = m.vertices.Count; v < vl; ++v)
-		{
-			float[] vertice = m.vertices[v];
-			vertices[v] = new Vector3(vertice[0], vertice[1], vertice[2]);
-		}
-
-		for(int f = 0, fl = m.faces.Count * 6; f < fl; f += 6)
-		{
-			int[] face = m.faces[f / 6];
-
-			triangles[f + 0] = face[0];
-			triangles[f + 1] = face[3];
-			triangles[f + 2] = face[1];
-			
-			triangles[f + 3] = face[3];
-			triangles[f + 4] = face[2];
-			triangles[f + 5] = face[1];
-		}
-
 		Mesh mesh = new Mesh ();
 		
 		if(!transform.GetComponent<MeshFilter> () ||  !transform.GetComponent<MeshRenderer> () ) //If you will havent got any meshrenderer or filter
@@ -145,8 +129,8 @@ public class IsoTerrain : MonoBehaviour {
 		
 		mesh.name = "Terrain";
 		
-		mesh.vertices = vertices;
-		mesh.triangles = triangles;
+		mesh.vertices = m.vertices;
+        mesh.triangles = m.triangles;
 		//mesh.uv = UV_MaterialDisplay;
 		
 		mesh.RecalculateNormals ();

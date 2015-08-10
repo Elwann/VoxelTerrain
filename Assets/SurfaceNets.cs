@@ -74,13 +74,14 @@ public class SurfaceNets {
      */
 	public sealed class Mesh {
 		
-		public readonly List<float[]> vertices;
-		public readonly List<int[]> faces;
-		
-		public Mesh(List<float[]> vertices, List<int[]> faces) {
-			this.vertices = vertices;
-			this.faces = faces;
-		}
+		public readonly Vector3[] vertices;
+        public readonly int[] triangles;
+
+        public Mesh(Vector3[] vertices, int[] triangles)
+        {
+            this.vertices = vertices;
+            this.triangles = triangles;
+        }
 	}
 	
 	/**
@@ -118,8 +119,8 @@ public class SurfaceNets {
 		
 		// we make some assumptions about the number of vertices and faces
 		// to reduce GC overhead
-		List<float[]> vertices = new List<float[]>();
-		List<int[]> faces = new List<int[]>();
+		List<Vector3> vertices = new List<Vector3>();
+        List<int> triangles = new List<int>();
 		
 		int n = 0;
 		
@@ -160,7 +161,7 @@ public class SurfaceNets {
 					
 					// Sum up edge intersections
 					int edge_mask = edge_table[mask];
-					float[] v = {0.0f, 0.0f, 0.0f};
+					Vector3 v = new Vector3();
 					int e_count = 0;
 					
 					// For every edge of the cube...
@@ -252,19 +253,21 @@ public class SurfaceNets {
 						// Remember to flip orientation depending on the sign
 						// of the corner.
 						if (boolean(mask & 1)) {
-							faces.Add(new int[]{
-								indexM,
-								indexMMinusDU,
-								indexMMinusDUMinusDV,
-								indexMMinusDV
-							});
+                            triangles.Add(indexM);
+                            triangles.Add(indexMMinusDV);
+                            triangles.Add(indexMMinusDU);
+
+                            triangles.Add(indexMMinusDV);
+                            triangles.Add(indexMMinusDUMinusDV);
+                            triangles.Add(indexMMinusDU);
 						} else {
-							faces.Add(new int[]{
-								indexM,
-								indexMMinusDV,
-								indexMMinusDUMinusDV,
-								indexMMinusDU
-							});
+                            triangles.Add(indexM);
+                            triangles.Add(indexMMinusDU);
+                            triangles.Add(indexMMinusDV);
+
+                            triangles.Add(indexMMinusDU);
+                            triangles.Add(indexMMinusDUMinusDV);
+                            triangles.Add(indexMMinusDV);
 						}
 					}
 				} // end x
@@ -272,7 +275,7 @@ public class SurfaceNets {
 		} // end z
 		
 		//All done!  Return the result
-		return new Mesh(vertices, faces);
+        return new Mesh(vertices.ToArray(), triangles.ToArray());
 	}
 
 	/**
