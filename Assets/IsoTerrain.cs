@@ -9,7 +9,7 @@ public class IsoTerrain : MonoBehaviour {
 	bool generated = false;
 	bool spawned = false;
 	int iterations = 2048;
-    int height = 186;
+    int height = 128;
 
 	int x = 0;
 	int y = 0;
@@ -54,34 +54,12 @@ public class IsoTerrain : MonoBehaviour {
 
 	float TerrainGenerator(int x, int y, int z)
 	{
+        float noise = 0;
+        noise += (Mathf.PerlinNoise(x / 60f + 50f, z / 50f + 15f) * Mathf.PerlinNoise(x / 30f + 28f, z / 1000f + 143f) * Mathf.PerlinNoise(x / 100f + 65f, z / 30f + 124f) * height - y) / height;
+		noise += (1f + ImprovedNoise.Noise((x*2f+5f)/40f,(y*2f+3f)/80f,(z*2f+0.6f)/40f)) / 8f;
+        noise += Mathf.Max(0f, (Mathf.PerlinNoise(x / 115f + 54f, z / 95f + 61f) / 2f * height - y) / height);
 
-		//float noise = /*y/h/0.05f +*/ ( ImprovedNoise.Noise((x*2f+5f)/20f,(y*2f+3f)/40f,(z*2f+0.6f)/20f) - ImprovedNoise.Noise(x/10f,y/5f,z/10f) ) / 2f;
-		//Debug.Log (noise);
-		/*if(y > h/2){
-			noise -= (y - h/2)/(h/2);
-		} else {
-			noise += (h/2 - y)/(h/2);
-		}*/
-
-		/*if(y > h / 2 && y / h > ImprovedNoise.Noise(x/30f,0f,z/30f)){
-			noise = -1;
-		} else if(y > h - h / 8) {
-			noise = -1;
-		}*/
-
-        //float noise = Mathf.PerlinNoise(x / 60f, z / 60f) * Mathf.PerlinNoise(x / 30f + 28f, z / 1000f + 143f) * Mathf.PerlinNoise(x / 100f + 65f, z / 30f + 124f) * 2 - (height - y) / height;
-        float mountain = (y / height) - Mathf.PerlinNoise(x / 60f, z / 60f) - 1f /* (y / height)*/;
-
-		float noise = 0;
-
-        if (y > mountain)
-			noise = lerp(0.1f, y / height, 1f);
-        else
-            noise = lerp(0.1f, 1f - y / height, 0f);
-
-		//noise *= (1.0f-ImprovedNoise.Noise((x*2f+5f)/20f,(y*2f+3f)/40f,(z*2f+0.6f)/20f)) * 0.8f;
-
-        return noise * 2f - 1f;
+        return noise / height;
 	}
 
     float lerp(float t, float a, float b) { return a + t * (b - a); }
