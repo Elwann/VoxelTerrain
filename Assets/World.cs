@@ -1,15 +1,15 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using SimplexNoise;
 
-public class IsoTerrain : MonoBehaviour {
+public class World : MonoBehaviour {
 
 	public Material terrainMaterial;
 
 	bool generated = false;
 	bool spawned = false;
 	int iterations = 2048;
-    int height = 128;
 
 	int x = 0;
 	int y = 0;
@@ -54,12 +54,22 @@ public class IsoTerrain : MonoBehaviour {
 
 	float TerrainGenerator(int x, int y, int z)
 	{
-        float noise = 0;
-        noise += (Mathf.PerlinNoise(x / 60f + 50f, z / 50f + 15f) * Mathf.PerlinNoise(x / 30f + 28f, z / 1000f + 143f) * Mathf.PerlinNoise(x / 100f + 65f, z / 30f + 124f) * height - y) / height;
-		noise += (1f + ImprovedNoise.Noise((x*2f+5f)/40f,(y*2f+3f)/80f,(z*2f+0.6f)/40f)) / 8f;
-        noise += Mathf.Max(0f, (Mathf.PerlinNoise(x / 115f + 54f, z / 95f + 61f) / 2f * height - y) / height);
+		float density = -y + 32f;
 
-        return noise / height;
+		//density += GetNoise(x, y, z, 2f, 0.5f);
+		//density += GetNoise(x, y, z, 0.2f, 5f);
+		density += GetNoise(x, y, z, 0.4f, 0.2f);
+		density += GetNoise(x, y, z, 0.1f, 1.0f);
+		//density += GetNoise(x, y, z, 0.04f, 4.0f);
+		density += GetNoise(x, y, z, 0.02f, 16.0f);
+
+		density += GetNoise(x, -100, z, 0.01f, 8.0f);
+		//density += GetNoise(x, 100, z, 0.004f, 64.0f);
+
+		float hard_floor_y = 32f;  
+		density += Mathf.Clamp01((hard_floor_y - y)*0.5f)*16f; 
+
+		return density;
 	}
 
     float lerp(float t, float a, float b) { return a + t * (b - a); }
@@ -118,5 +128,15 @@ public class IsoTerrain : MonoBehaviour {
 		Debug.Log ("Complete");
 
 		spawned = true;
+	}
+
+	public static float GetNoise(int x, int y, int z, float scale, float max)
+	{
+		//return (Noise.Generate(x * scale, y * scale, z * scale) + 1f) * (max / 2f);
+		return Noise.Generate(x * scale, y * scale, z * scale) * max;
+	}
+
+	public bool Complete(){
+		return spawned;
 	}
 }
