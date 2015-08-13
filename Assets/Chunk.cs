@@ -9,19 +9,21 @@ public class Chunk : MonoBehaviour {
 	
 	bool generated = false;
 	bool spawned = false;
-	int iterations = 4048;
+    int iterations = 16384; //8192;
 	
 	int x = 0;
 	int y = 0;
 	int z = 0;
 	
-	int originX = 0;
+	/*int originX = 0;
 	int originY = 0;
-	int originZ = 0;
+	int originZ = 0;*/
+
+    public WorldPos pos;
 	
-	int w = 32;
-	int h = 32;
-	int p = 32;
+	int w;
+	int h;
+	int p;
 
 	float floor = 16f;
 	
@@ -34,19 +36,22 @@ public class Chunk : MonoBehaviour {
 	{
 		time = Time.time;
 
+        // Set size
+        w = World.chunkSize + World.chunkMargin;
+        h = World.chunkHeight;
+        p = World.chunkSize + World.chunkMargin;
+
 		// Get origin
-		originX = Mathf.RoundToInt(transform.position.x);
-		originY = Mathf.RoundToInt(transform.position.y);
-		originZ = Mathf.RoundToInt(transform.position.z);
+		pos = new WorldPos(Mathf.RoundToInt(transform.position.x), Mathf.RoundToInt(transform.position.y), Mathf.RoundToInt(transform.position.z));
 		
 		// Snap position
-		Vector3 position = new Vector3(originX, originY, originZ);
+		Vector3 position = new Vector3(pos.x, pos.y, pos.z);
 		transform.position = position;
 		
 		// Init Datas
 		datas = new float[w*h*p];
 
-		Debug.Log ("Generating Chunk "+"("+originX+","+originY+","+originZ+")");
+		Debug.Log ("Generating Chunk "+"("+pos.x+","+pos.y+","+pos.z+")");
 	}
 	
 	void Update ()
@@ -91,7 +96,7 @@ public class Chunk : MonoBehaviour {
 	{
 		for(int i = 0; i < iterations; ++i)
 		{
-			datas[z * h * w + y * w + x] = TerrainGenerator(originX + x, originY + y, originZ + z);
+			datas[z * h * w + y * w + x] = TerrainGenerator(pos.x + x, pos.y + y, pos.z + z);
 			
 			++x;
 			
@@ -116,36 +121,38 @@ public class Chunk : MonoBehaviour {
 	
 	void GenerateMesh()
 	{
-		SurfaceNets.Mesh m = SurfaceNets.Run(datas, new int[]{w, h, p});
-		
-		Mesh mesh = new Mesh ();
-		
-		if(!transform.GetComponent<MeshFilter> () ||  !transform.GetComponent<MeshRenderer> () ) //If you will havent got any meshrenderer or filter
+		// Add component if needed
+        if (!transform.GetComponent<MeshFilter>() || !transform.GetComponent<MeshRenderer>() || !transform.GetComponent<MeshCollider>()) //If you will havent got any meshrenderer or filter
 		{
 			transform.gameObject.AddComponent<MeshFilter>();
 			transform.gameObject.AddComponent<MeshRenderer>();
+            transform.gameObject.AddComponent<MeshCollider>();
 		}
 
-		transform.gameObject.AddComponent<MeshCollider>();
-		
-		transform.GetComponent<MeshFilter> ().mesh = mesh;
-		MeshCollider col = transform.GetComponent<MeshCollider>();
-		col.sharedMesh = mesh;
-		col.convex = true;
-		
-		mesh.name = "Chunk "+"("+originX+","+originY+","+originZ+")";
-		
+        // Get datas
+        SurfaceNets.Mesh m = SurfaceNets.Run(datas, new int[] { w, h, p });
+
+        // Setup mesh
+        Mesh mesh = new Mesh();
+		mesh.name = "Chunk "+"("+pos.x+","+pos.y+","+pos.z+")";
 		mesh.vertices = m.vertices;
 		mesh.triangles = m.triangles;
 		//mesh.uv = UV_MaterialDisplay;
-		
 		mesh.RecalculateNormals ();
-		mesh.Optimize ();
-		transform.GetComponent<Renderer>().material = terrainMaterial;
+        mesh.RecalculateBounds ();
+		mesh.Optimize();
+
+        transform.GetComponent<MeshFilter>().mesh = mesh;
+
+        MeshCollider col = transform.GetComponent<MeshCollider>();
+        //col.convex = true;
+        col.sharedMesh = mesh;
+
+        transform.GetComponent<Renderer>().material = terrainMaterial;
 
 		time = Time.time - time;
 		
-		Debug.Log ("Complete "+"("+originX+","+originY+","+originZ+") in "+time+" frame "+(time/frame)+" nbr "+frame);
+		Debug.Log ("Complete "+"("+pos.x+","+pos.y+","+pos.z+") in "+time+" frame "+(time/frame)+" nbr "+frame);
 		
 		spawned = true;
 	}

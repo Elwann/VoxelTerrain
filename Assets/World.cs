@@ -7,18 +7,23 @@ public class World : MonoBehaviour {
 
 	public Chunk chunk;
 
-	Chunk temp;
+    public Dictionary<WorldPos, Chunk> chunks = new Dictionary<WorldPos, Chunk>();
 
-	List<WorldPos> pending = new List<WorldPos>();
+	//Chunk temp;
 
-	int sizeX = 6;
-	int sizeY = 3;
-	int sizeZ = 6;
+	//List<WorldPos> pending = new List<WorldPos>();
 
-	int spacing = 30;
+	//int sizeX = 6;
+	//int sizeY = 3;
+	//int sizeZ = 6;
+
+    public static int chunkMargin = 2;
+    public static int chunkHeight = 128;
+    public static int chunkSize = 30;
 
 	void Start()
 	{
+        /*
 		for(int x = 0; x < sizeX; ++x)
 		{
 			for(int z = 0; z < sizeZ; ++z)
@@ -31,10 +36,12 @@ public class World : MonoBehaviour {
 		}
 
 		CreateChunk();
+        */
 	}
 
 	void Update()
 	{
+        /*
 		if(pending.Count > 0)
 		{
 			if(temp.Complete())
@@ -42,15 +49,43 @@ public class World : MonoBehaviour {
 				CreateChunk();
 			}
 		}
+        */
 	}
 
-	void CreateChunk()
+    public Chunk GetChunk(int x, int y, int z)
+    {
+        WorldPos pos = new WorldPos();
+        float multiple = chunkSize;
+        pos.x = Mathf.FloorToInt(x / multiple) * chunkSize;
+        pos.y = Mathf.FloorToInt(y / multiple) * chunkSize;
+        pos.z = Mathf.FloorToInt(z / multiple) * chunkSize;
+
+        Chunk containerChunk = null;
+
+        chunks.TryGetValue(pos, out containerChunk);
+
+        return containerChunk;
+    }
+
+	public void CreateChunk(int x, int y, int z)
 	{
-		if(pending.Count > 0)
-		{
-			temp = Instantiate(chunk, pending[0].ToVector() * spacing - new Vector3(spacing/2f, spacing/2f, spacing/2f), new Quaternion()) as Chunk;
-			temp.transform.parent = transform;
-			pending.RemoveAt(0);
-		}
+        WorldPos worldPos = new WorldPos(x, y, z);
+		//if(pending.Count > 0)
+		//{
+            Chunk c = Instantiate(chunk, worldPos.ToVector() - new Vector3(chunkSize / 2f, chunkSize / 2f, chunkSize / 2f), new Quaternion()) as Chunk;
+			c.transform.parent = transform;
+            chunks.Add(worldPos, c);
+		//}
 	}
+
+    public void DestroyChunk(int x, int y, int z)
+    {
+        Chunk chunk = null;
+        if (chunks.TryGetValue(new WorldPos(x, y, z), out chunk))
+        {
+            Object.Destroy(chunk.gameObject);
+            Debug.Log("Deleting Chunk " + "(" + x + "," + y + "," + z + ")");
+            chunks.Remove(new WorldPos(x, y, z));
+        }
+    }
 }

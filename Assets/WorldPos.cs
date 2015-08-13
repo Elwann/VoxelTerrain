@@ -2,9 +2,14 @@
 
 public class WorldPos
 {
-	public int x;
-	public int y;
-	public int z;
+	public int x, y, z;
+
+    public WorldPos()
+    {
+        this.x = 0;
+        this.y = 0;
+        this.z = 0;
+    }
 
 	public WorldPos(int x, int y, int z)
 	{
@@ -17,4 +22,25 @@ public class WorldPos
 	{
 		return new Vector3(x, y, z);
 	}
+
+    public override int GetHashCode()
+    {
+        unchecked
+        {
+            int hash = 47;
+
+            hash = hash * 227 + x.GetHashCode();
+            hash = hash * 227 + y.GetHashCode();
+            hash = hash * 227 + z.GetHashCode();
+
+            return hash;
+        }
+    }
+
+    public override bool Equals(object obj)
+    {
+        if (GetHashCode() == obj.GetHashCode())
+            return true;
+        return false;
+    }
 }
