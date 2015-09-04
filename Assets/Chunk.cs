@@ -73,7 +73,7 @@ public class Chunk : MonoBehaviour {
 		float density = -y + floor;
 
 		density += Mathf.Clamp(GetNoise(x, -45, z, 0.006f, 64.0f) -8f, -16f, 48f);
-		density += Mathf.Clamp((32 - y)*1f,-1f,1f)*2f; 
+		//density += Mathf.Clamp((32 - y)*1f,-1f,1f)*2f; 
 
 		//density += GetNoise(x, y, z, 2f, 0.4f);
 		//density += GetNoise(x, y, z, 0.2f, 5f);
@@ -83,11 +83,25 @@ public class Chunk : MonoBehaviour {
 		density += GetNoise(x, y, z, 0.02f, 16.0f);
 		
 		density += GetNoise(x, -100, z, 0.01f, 8.0f);
-		//density += GetNoise(x, 100, z, 0.004f, 64.0f);
+		density += GetNoise(x, 100, z, 0.004f, 64.0f);
 
-		density += Mathf.Clamp01((floor - y)*0.4f)*12f; 
-		
-		return density;
+		//density += Mathf.Clamp01((floor - y)*0.4f)*12f; 
+
+
+		float n = 0;
+
+		n += Noise.Generate(x * 0.025f, y * 0.020f, z * 0.018f);
+		n += Noise.Generate(x * 0.007f, y * 0.005f, z * 0.006f);
+		n += GetNoise(x, y, z, 0.4f, 0.015f);
+		n += GetNoise(x, y, z, 0.1f, 0.02f);
+		//n += Noise.Generate( 2.5*x/image.width, 6*y/image.height, 50 );
+
+		n = n * 0.5f;
+		//n = Mathf.Abs(n) * 32f - y;
+		n = Mathf.Pow(n, 2f) * 32f - y;
+
+		//return Mathf.Min (n, density);
+		return n + density;
 	}
 	
 	float lerp(float t, float a, float b) { return a + t * (b - a); }
